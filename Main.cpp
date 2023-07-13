@@ -2,7 +2,11 @@
 #include <d3d11.h>
 #include <d3dx10.h>
 
+#include <thread>
+
 #pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3d10.lib") 
+#pragma comment(lib, "d3dx10.lib")
 
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
@@ -12,6 +16,7 @@ D3D10_DRIVER_TYPE       g_driverType        = D3D10_DRIVER_TYPE_NULL;
 ID3D10Device*           g_pd3dDevice        = NULL;
 IDXGISwapChain*         g_pSwapChain        = NULL;
 ID3D10RenderTargetView* g_pRenderTargetView = NULL;
+ID3DX10Font*            g_pFont             = NULL;
 
 HRESULT InitWindow(HINSTANCE hInstane, int nCmdShow);
 HRESULT InitDirect3D10();
@@ -41,11 +46,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         }
         else {
-
             RenderScene();
-
         }
-
+        std::this_thread::sleep_for(std::chrono::milliseconds{1});
     }
 
     return (int)msg.wParam;
@@ -174,6 +177,9 @@ HRESULT InitDirect3D10() {
     vp.TopLeftY = 0;
     g_pd3dDevice->RSSetViewports(1, &vp);
 
+    D3DX10CreateFont(g_pd3dDevice, 14, 8, 1, 1, FALSE, 0, 0, 0,
+        DEFAULT_PITCH | FF_MODERN, L"Verdana", &g_pFont);
+
     return S_OK;
 
 }
@@ -182,6 +188,15 @@ void RenderScene() {
 
     float ClearColor[4] = { 0.1f, 0.5f, 0.1f, 1.0f };
     g_pd3dDevice->ClearRenderTargetView(g_pRenderTargetView, ClearColor);
+
+    RECT Rect;
+    Rect.left = 10;
+    Rect.top = 10;
+    Rect.right = 600;
+    Rect.bottom = 380;
+
+    g_pFont->DrawTextW(NULL, L"Этот текст мы вывели на экран", -1, &Rect, DT_CENTER | DT_VCENTER, D3DXCOLOR(1.0, 1.0, 1.0, 1.0));
+
     g_pSwapChain->Present(0, 0);
 
 }
@@ -201,6 +216,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 void Cleanup() {
 
     if (g_pd3dDevice) g_pd3dDevice->ClearState();
+
+    if (g_pFont) g_pFont->Release();
+
     if (g_pRenderTargetView) g_pRenderTargetView->Release();
     if (g_pSwapChain) g_pSwapChain->Release();
     if (g_pd3dDevice) g_pd3dDevice->Release();
